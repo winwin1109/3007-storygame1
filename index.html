@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聽故事學文書一: 禮儀文書初體驗</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+
+        :root {
+            --mario-blue: #5c94fc;
+            --mario-brick: #c84c0c;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--mario-blue);
+            font-family: 'ZCOOL KuaiLe', "Microsoft JhengHei", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            min-height: 700px;
+            background: linear-gradient(180deg, #5c94fc 0%, #a0c4ff 100%);
+            position: relative;
+            border: 8px solid #000;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 頂部狀態列 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 10;
+        }
+
+        .stars-container {
+            color: #ffcc00;
+            font-size: 28px;
+            letter-spacing: 2px;
+        }
+
+        /* 影片與文字區 */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .video-box {
+            width: 100%;
+            max-width: 500px;
+            background: #000;
+            border: 6px solid #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+            aspect-ratio: 16/9;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .story-box {
+            background: rgba(255, 255, 255, 0.95);
+            border: 4px solid #000;
+            border-radius: 15px;
+            padding: 20px;
+            width: 90%;
+            font-size: 22px;
+            line-height: 1.6;
+            box-shadow: 5px 5px 0 rgba(0,0,0,0.2);
+            position: relative;
+            color: #333;
+        }
+
+        .red-text {
+            color: #e74c3c;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        /* 語音按鈕 */
+        .audio-btn {
+            position: absolute;
+            top: -20px;
+            right: 20px;
+            background: #ff4500;
+            color: white;
+            border: 3px solid #000;
+            padding: 8px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-family: inherit;
+            box-shadow: 2px 2px 0 #000;
+            transition: transform 0.1s;
+        }
+        .audio-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 #000; }
+
+        /* 蘑菇選項區 */
+        .options-area {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 20px;
+            margin-bottom: 50px;
+            z-index: 10;
+            flex-wrap: wrap;
+        }
+
+        .mushroom-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s ease;
+            font-family: inherit;
+            outline: none;
+            position: relative;
+        }
+
+        .mushroom-btn:hover:not(:disabled) {
+            transform: translateY(-10px) scale(1.05);
+        }
+
+        /* 答對時的長大動畫 */
+        .mushroom-btn.grow {
+            transform: scale(1.6) translateY(-15px);
+            z-index: 50;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .mushroom-icon {
+            font-size: 60px;
+            filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.3));
+            margin-bottom: 10px;
+        }
+
+        .mushroom-label {
+            background: #fff;
+            border: 3px solid #000;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 3px 3px 0 #000;
+            color: #333;
+            min-width: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        /* 瑪利歐地板 */
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background-color: var(--mario-brick);
+            background-image: 
+                linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), 
+                linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            border-top: 4px solid #000;
+            z-index: 1;
+        }
+
+        /* 覆蓋層 (開始/結束/訊息) */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+
+        .title-text {
+            font-size: 48px;
+            color: #fff;
+            text-shadow: 4px 4px 0 #e74c3c, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .action-btn {
+            background: #e74c3c;
+            color: white;
+            border: 4px solid #fff;
+            padding: 15px 40px;
+            font-size: 28px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 8px 0 #c0392b;
+            transition: all 0.1s;
+        }
+        .action-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 0 0 #c0392b;
+        }
+
+        /* 自訂訊息框 */
+        #message-box {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            border: 6px solid #000;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            z-index: 200;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.6);
+            width: 80%;
+            max-width: 400px;
+        }
+
+        #message-title {
+            font-size: 32px;
+            margin-bottom: 15px;
+            margin-top: 0;
+        }
+
+        #message-desc {
+            font-size: 22px;
+            color: #555;
+            margin-bottom: 25px;
+        }
+
+        .msg-btn {
+            background: #3498db;
+            color: white;
+            border: 3px solid #000;
+            padding: 10px 30px;
+            font-size: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 3px 3px 0 #000;
+        }
+        .msg-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 #000; }
+        
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="header">
+        <div>關卡: <span id="level-display">1</span> / 7</div>
+        <div class="stars-container" id="stars-display"></div>
+    </div>
+
+    <div class="content-area">
+        <div class="video-box">
+            <!-- 確保 V1.mp4 等影片檔和此網頁放在同一個資料夾 -->
+            <video id="game-video" controls controlsList="nodownload">
+                <source src="" type="video/mp4">
+                您的瀏覽器不支援影片播放。
+            </video>
+        </div>
+
+        <div class="story-box">
+            <button class="audio-btn" onclick="playVoice()">🔊 聽故事</button>
+            <div id="story-text">故事載入中...</div>
+        </div>
+    </div>
+
+    <!-- 選項區 -->
+    <div class="options-area" id="options-container">
+    </div>
+
+    <div class="ground"></div>
+
+    <div id="start-screen" class="overlay">
+        <h1 class="title-text">聽故事學文書一: 禮儀文書初體驗</h1>
+        <p style="font-size: 24px; margin-bottom: 40px; text-shadow: 2px 2px #000;">聽故事，選出正確的蘑菇書信！</p>
+        <button class="action-btn" onclick="startGame()">開始遊戲</button>
+    </div>
+
+    <div id="end-screen" class="overlay" style="display: none;">
+        <h1 class="title-text">任務完成！</h1>
+        <div style="font-size: 40px; margin: 20px 0;" id="final-stars"></div>
+        <p style="font-size: 24px; margin-bottom: 40px; text-shadow: 2px 2px #000;">恭喜你掌握了所有禮儀文書！</p>
+        <button class="action-btn" onclick="location.reload()">再玩一次</button>
+    </div>
+
+    <div id="message-box">
+        <h2 id="message-title" style="color: #27ae60;">正確！</h2>
+        <p id="message-desc">獲得一顆星星 ⭐</p>
+        <button class="msg-btn" id="message-btn" onclick="closeMessage()">繼續</button>
+    </div>
+</div>
+
+<script>
+    const scenarios = [
+        {
+            id: 1, video: "V1.mp4",
+            htmlText: "你係 VTC 嘅學生。老師想安排你哋去參觀深圳嘅樂口福食品廠。參觀之前，班主任用學校名義寫咗封 <span class='red-text'>[ ❓ 甚麼信 ]</span> 畀對方，希望廠方同意你哋去參觀。",
+            speechText: "你係 V T C 嘅學生。老師想安排你哋去參觀深圳嘅樂口福食品廠。參觀之前，班主任用學校名義寫咗封 甚麼信 畀對方，希望廠方同意你哋去參觀。",
+            options: ["申請信", "邀請信", "慰問信"], ans: "申請信"
+        },
+        {
+            id: 2, video: "V2.mp4",
+            htmlText: "食品廠好歡迎你哋。你哋喺老師帶領下參觀咗一日，行政部陳經理同同事都好熱情接待。返到香港後，班代表代表全班寫咗封 <span class='red-text'>[ ❓ 甚麼信 ]</span> 畀陳經理。",
+            speechText: "食品廠好歡迎你哋。你哋喺老師帶領下參觀咗一日，行政部陳經理同同事都好熱情接待。返到香港之後，班代表代表全班寫咗封 甚麼信 畀陳經理。",
+            options: ["感謝信", "道歉信", "申請信"], ans: "感謝信"
+        },
+        {
+            id: 3, video: "V3.mp4",
+            htmlText: "幾個月後，學院收到食品廠寄嚟嘅 <span class='red-text'>[ ❓ 甚麼信 ]</span>，邀請你哋學校嘅學生到該廠實習。",
+            speechText: "幾個月之後，學院收到食品廠寄嚟嘅 甚麼信，邀請你哋學校嘅學生去嗰間廠實習。",
+            options: ["邀請信", "感謝信", "慰問信"], ans: "邀請信"
+        },
+        {
+            id: 4, video: "V4.mp4",
+            htmlText: "院長寫咗封 <span class='red-text'>[ ❓ 甚麼信 ]</span> 畀佢哋，表示非常感謝，同埋好樂意派學生前往實習。",
+            speechText: "院長寫咗封 甚麼信 畀佢哋，表示非常感謝，同埋好樂意派學生去實習。",
+            options: ["回覆邀請信", "道歉信", "請柬"], ans: "回覆邀請信"
+        },
+        {
+            id: 5, video: "V5.mp4",
+            // 第5題修改：變成「甚麼文書」
+            htmlText: "一年後食品廠喺香港開舖。陳經理寄咗張 <span class='red-text'>[ ❓ 甚麼文書 ]</span>，請你哋參加開業酒會。同學準備咗花籃賀卡祝賀生意興隆。",
+            speechText: "一年之後食品廠喺香港開舖。陳經理寄咗張 甚麼文書 嚟，邀請你哋參加開業酒會。同學準備咗花籃同埋賀卡，祝對方生意興隆。",
+            options: ["請柬", "慰問信", "申請信"], ans: "請柬"
+        },
+        {
+            id: 6, video: "V6.mp4",
+            htmlText: "參加酒會嗰陣，有同學唔小心打破咗紀念獎盃。佢就寫咗封 <span class='red-text'>[ ❓ 甚麼信 ]</span> 致歉，仲話願意作出賠償。",
+            speechText: "參加酒會嗰陣，有同學唔小心打破咗紀念獎盃。嗰位同學就寫咗封 甚麼信 嚟致歉，仲話願意作出賠償。",
+            options: ["道歉信", "邀請信", "感謝信"], ans: "道歉信"
+        },
+        {
+            id: 7, video: "V7.mp4",
+            htmlText: "另外，有位同學返屋企途中撞車受咗輕傷。你代表全班寫咗封 <span class='red-text'>[ ❓ 甚麼信 ]</span>，仲去醫院探佢，祝佢早日康復。",
+            speechText: "另外，你哋班有一位同學喺返屋企途中因為交通意外受咗輕傷。你代表全班寫咗封 甚麼信，仲去醫院探佢，祝佢早日康復。",
+            options: ["慰問信", "申請信", "請柬"], ans: "慰問信"
+        }
+    ];
+
+    let currentLevel = 0;
+    let stars = 0;
+    let actionAfterMessage = null;
+    let isAnimating = false; // 防止連續點擊
+    const synth = window.speechSynthesis;
+
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        loadLevel();
+    }
+
+    function loadLevel() {
+        if (currentLevel >= scenarios.length) {
+            endGame();
+            return;
+        }
+
+        isAnimating = false; // 重設動畫狀態
+        const data = scenarios[currentLevel];
+        document.getElementById('level-display').innerText = currentLevel + 1;
+        document.getElementById('story-text').innerHTML = data.htmlText;
+        
+        const video = document.getElementById('game-video');
+        video.src = data.video;
+        video.load();
+        
+        let playPromise = video.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => { console.log("等待使用者播放"); });
+        }
+
+        let shuffledOptions = [...data.options].sort(() => Math.random() - 0.5);
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        
+        const mushroomEmojis = ['🍄', '🍄‍🟫', '🍄']; 
+
+        shuffledOptions.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'mushroom-btn';
+            
+            // 擷取字串的第一個字
+            const firstChar = opt.charAt(0);
+            
+            btn.innerHTML = `
+                <div class="mushroom-icon">${mushroomEmojis[index % 3]}</div>
+                <div class="mushroom-label" id="label-${index}">${firstChar}</div>
+            `;
+            
+            // 將按鈕元素(btn)與索引(index)傳遞給檢查函數
+            btn.onclick = () => checkAnswer(opt, btn, `label-${index}`);
+            container.appendChild(btn);
+        });
+
+        setTimeout(() => { playVoice(); }, 800);
+    }
+
+    function playVoice() {
+        if (synth.speaking) synth.cancel();
+        
+        const textToRead = scenarios[currentLevel].speechText;
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+        utterance.lang = 'zh-HK';
+        utterance.rate = 0.95; 
+        utterance.pitch = 1.1; 
+        
+        synth.speak(utterance);
+    }
+
+    function checkAnswer(choice, btnElement, labelId) {
+        if (isAnimating) return; // 動畫期間禁止點擊
+        if (synth.speaking) synth.cancel(); 
+
+        const correct = scenarios[currentLevel].ans;
+        if (choice === correct) {
+            isAnimating = true; // 鎖定點擊
+            
+            // 1. 執行長大動畫並顯示完整名稱
+            btnElement.classList.add('grow');
+            document.getElementById(labelId).innerText = choice;
+            document.getElementById(labelId).style.color = "#e74c3c"; // 變成紅色強調
+
+            // 停用所有按鈕，防止二次點擊
+            const allBtns = document.querySelectorAll('.mushroom-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            // 2. 延遲 1.2 秒讓玩家看動畫，然後才跳出恭喜視窗
+            setTimeout(() => {
+                stars++;
+                updateStars();
+                showMessage("✅ 答對喇！", `完整文書名稱係：${correct}！`, "#27ae60", () => {
+                    currentLevel++;
+                    loadLevel();
+                });
+            }, 1200);
+
+        } else {
+            showMessage("❌ 哎呀！", "選錯蘑菇喇，請再試一次！", "#e74c3c", null);
+        }
+    }
+
+    function updateStars() {
+        const display = document.getElementById('stars-display');
+        display.innerHTML = '⭐'.repeat(stars);
+    }
+
+    function showMessage(title, desc, color, callback) {
+        document.getElementById('message-title').innerText = title;
+        document.getElementById('message-title').style.color = color;
+        document.getElementById('message-desc').innerText = desc;
+        document.getElementById('message-box').style.display = 'block';
+        
+        const btn = document.getElementById('message-btn');
+        btn.style.backgroundColor = color;
+        actionAfterMessage = callback;
+    }
+
+    function closeMessage() {
+        document.getElementById('message-box').style.display = 'none';
+        if (actionAfterMessage) {
+            actionAfterMessage();
+            actionAfterMessage = null;
+        }
+    }
+
+    function endGame() {
+        const endScreen = document.getElementById('end-screen');
+        endScreen.style.display = 'flex';
+        document.getElementById('final-stars').innerHTML = '⭐'.repeat(stars);
+        
+        if (synth.speaking) synth.cancel();
+        const utterance = new SpeechSynthesisUtterance("恭喜你！任務完成，你已經掌握所有禮儀文書喇！");
+        utterance.lang = 'zh-HK';
+        synth.speak(utterance);
+    }
+</script>
+
+</body>
+</html>
